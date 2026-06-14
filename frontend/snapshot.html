@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drew — 快照详情</title>
+<link rel="stylesheet" href="css/theme.css">
+<style>
+.snapshot-detail { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.panel { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; }
+.panel h3 { margin-bottom: 0.75rem; font-size: 1rem; color: var(--accent); }
+.step-row { display: flex; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); align-items: center; }
+.step-row:last-child { border-bottom: none; }
+.step-id { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 0.75rem; font-weight: 700; font-family: var(--font-mono); }
+.step-auto { background: rgba(74, 222, 128, 0.15); color: var(--success); }
+.step-human { background: rgba(251, 191, 36, 0.15); color: var(--warning); }
+.step-name { flex: 1; }
+.step-tool { font-family: var(--font-mono); font-size: 0.75rem; color: var(--info); }
+.step-hours { font-size: 0.75rem; color: var(--text-muted); }
+.variables-table td:first-child { font-family: var(--font-mono); color: var(--info); }
+.qa-table td:last-child { font-family: var(--font-mono); }
+</style>
+</head>
+<body>
+<div class="drew-layout">
+  <aside class="drew-sidebar">
+    <div class="brand">Drew<span> Detail</span></div>
+    <nav>
+      <a href="index.html"><span class="icon">🏪</span> 快照市场</a>
+      <a href="match.html"><span class="icon">🎯</span> 智能匹配</a>
+      <a href="snapshot.html" class="active"><span class="icon">📦</span> 快照详情</a>
+      <a href="#"><span class="icon">⛓️</span> 执行链路</a>
+      <a href="#"><span class="icon">📊</span> 验收报告</a>
+      <a href="#"><span class="icon">⚙️</span> 设置</a>
+    </nav>
+  </aside>
+  <main class="drew-main">
+    <h1 id="page-title">📦 快照详情</h1>
+
+    <div class="snapshot-detail">
+      <div class="left-col">
+        <div class="panel">
+          <h3>📋 基本信息</h3>
+          <table>
+            <tr><td>快照 ID</td><td id="detail-id">—</td></tr>
+            <tr><td>名称</td><td id="detail-name">—</td></tr>
+            <tr><td>版本</td><td id="detail-version">—</td></tr>
+            <tr><td>作者</td><td id="detail-author">—</td></tr>
+            <tr><td>报价</td><td id="detail-price" style="color:var(--success);font-weight:700;">—</td></tr>
+            <tr><td>标签</td><td id="detail-tags">—</td></tr>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h3>🔧 可配置变量</h3>
+          <table class="variables-table">
+            <thead><tr><th>变量名</th><th>类型</th><th>选项</th><th>默认值</th></tr></thead>
+            <tbody id="detail-variables"></tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h3>📊 指标数据</h3>
+          <table>
+            <tr><td>复用次数</td><td id="detail-reuse">—</td></tr>
+            <tr><td>平均交付</td><td id="detail-days">—</td></tr>
+            <tr><td>满意度</td><td id="detail-sat">—</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="right-col">
+        <div class="panel">
+          <h3>⛓️ DAG 执行链路</h3>
+          <div id="detail-steps"></div>
+        </div>
+
+        <div class="panel">
+          <h3>🧪 QA 验收清单</h3>
+          <table class="qa-table">
+            <thead><tr><th>检查项</th><th>方法</th></tr></thead>
+            <tbody id="detail-qa"></tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h3>🌿 快照内容（YAML）</h3>
+          <pre id="detail-yaml" class="line-numbers"></pre>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const API_BASE = 'http://localhost:8000/api/v1';
+const params = new URLSearchParams(location.search);
+const snapshotId = params.get('id') || 'yjbg-001';
+
+async function load() {
+  try {
+    const r = await fetch(API_BASE + '/snapshots/' + snapshotId);
+    if (!r.ok) throw new Error('not found');
+    const d = await r.json();
+    render(d);
+  } catch(e) {
+    document.querySelector('.snapshot-detail').innerHTML = '<p style="color:var(--danger)">加载失败: ' + e.message + '</p>';
+  }
+}
+
+function render(d) {
+  document.getElementById('page-title').textContent = '📦 ' + d.name;
+  document.getElementById('detail-id').textContent = d.snapshot_id;
+  document.getElementById('detail-name').textContent = d.name;
+  document.getElementById('detail-version').textContent = d.version;
+  document.getElementById('detail-author').textContent = d.author;
+  document.getElementById('detail-price').textContent = '¥' + d.price.toLocaleString();
+  document.getElementById('detail-tags').innerHTML = (d.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+  document.getElementById('detail-reuse').textContent = d.metrics?.reuse_count || 0;
+  document.getElementById('detail-days').textContent = (d.metrics?.avg_delivery_days || 0) + ' 天';
+  document.getElementById('detail-sat').textContent = ((d.metrics?.satisfaction || 0) * 100).toFixed(0) + '%';
+
+  const varsBody = document.getElementById('detail-variables');
+  varsBody.innerHTML = (d.variables || []).map(v => `
+    <tr><td>${v.name}</td><td>${v.type}</td><td>${(v.options || []).join(', ')}</td><td>${v.default ?? '—'}</td></tr>
+  `).join('');
+
+  const stepsBody = document.getElementById('detail-steps');
+  stepsBody.innerHTML = (d.steps || []).map(s => `
+    <div class="step-row">
+      <div class="step-id ${s.auto ? 'step-auto' : 'step-human'}">${s.auto ? '🤖' : '👤'}</div>
+      <div class="step-name">Step ${s.id}: ${s.name}</div>
+      <div class="step-tool">${s.tool}</div>
+      <div class="step-hours">${s.estimated_hours}h</div>
+    </div>
+  `).join('');
+
+  const qaBody = document.getElementById('detail-qa');
+  qaBody.innerHTML = (d.qa || []).map(q => `
+    <tr><td>${q.check}</td><td><span class="pill ${q.method === 'auto' ? 'pill-info' : 'pill-warning'}">${q.method}</span></td></tr>
+  `).join('');
+
+  // 生成 YAML 预览
+  const yamlLines = [
+    `---`,
+    `snapshot_id: "${d.snapshot_id}"`,
+    `name: "${d.name}"`,
+    `version: "${d.version}"`,
+    `author: "${d.author}"`,
+    `price: ${d.price}`,
+    `tags: [${(d.tags || []).map(t => `"${t}"`).join(', ')}]`,
+    `variables:`,
+    ...(d.variables || []).map(v => `  - name: ${v.name}\n    type: ${v.type}\n    options: [${(v.options || []).join(', ')}]\n    default: ${v.default ?? 'null'}`),
+    `steps:`,
+    ...(d.steps || []).map(s => `  - id: ${s.id}\n    name: "${s.name}"\n    tool: "${s.tool}"\n    auto: ${s.auto}\n    estimated_hours: ${s.estimated_hours}`),
+    `qa:`,
+    ...(d.qa || []).map(q => `  - check: "${q.check}"\n    method: ${q.method}`),
+    `metrics:`,
+    `  reuse_count: ${d.metrics?.reuse_count || 0}`,
+    `  avg_delivery_days: ${d.metrics?.avg_delivery_days || 0}`,
+    `  satisfaction: ${d.metrics?.satisfaction || 0}`,
+  ];
+  document.getElementById('detail-yaml').innerHTML = yamlLines.map((l, i) => `<div class="line"><span class="line-num">${i+1}</span>${l}</div>`).join('');
+}
+
+load();
+</script>
+</body>
+</html>

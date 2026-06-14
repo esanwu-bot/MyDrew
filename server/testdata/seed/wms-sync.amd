@@ -1,0 +1,116 @@
+---
+Task_CID: "official-wms-sync-v1"
+Ref_Agent_ID: "drew-official"
+Branch_Tag: "official"
+Timestamp: "2026-01-15T08:00:00Z"
+Domain_Tags:
+  - "WMS"
+  - "Warehouse"
+  - "Inventory-Sync"
+  - "Logistics"
+Execution_Framework: "LangGraph"
+Base_Model_Tier: "LLM-Tier-2"
+Data_Sovereignty: "Cloud_Allowed"
+Input_Contract:
+  Type: "JSON"
+  Schema_Hash: "sha256:wms-sync-in-v1"
+  Sample:
+    warehouse_id: "WH-001"
+    sync_type: "full"
+Output_Contract:
+  Type: "JSON"
+  Schema_Hash: "sha256:wms-sync-out-v1"
+  Sample:
+    synced_count: 1500
+    errors: []
+Success_Rate_Est: 0.95
+Avg_Token_Cost: 3200
+Split_Protocol:
+  Original_Share: 1.0
+  Branch_Share: 0.0
+---
+
+## Task Goal
+Synchronize inventory data from WMS (Warehouse Management System) to the central inventory database, handling pagination, rate limiting, and data validation.
+
+## Chain of Thought & Action Trajectory
+
+### Step 1: Initialize WMS Connection
+**CoT**: First, establish a connection to the WMS API using the provided warehouse credentials. We need to authenticate and get a session token for subsequent requests.
+```tool_call
+name: http_request
+args:
+  method: POST
+  url: "{{wms_base_url}}/api/auth"
+  headers:
+    Content-Type: application/json
+  body:
+    warehouse_id: "{{warehouse_id}}"
+    api_key: "{{api_key}}"
+response_mock_schema:
+  session_token: "string"
+  expires_in: 3600
+```
+
+### Step 2: Fetch Inventory Pages
+**CoT**: WMS APIs typically paginate results. We need to iterate through all pages to get the complete inventory snapshot. Handle rate limiting with exponential backoff.
+```tool_call
+name: http_request
+args:
+  method: GET
+  url: "{{wms_base_url}}/api/inventory?page={{page}}&per_page=100"
+  headers:
+    Authorization: "Bearer {{session_token}}"
+response_mock_schema:
+  items: "array"
+  total_pages: "integer"
+  current_page: "integer"
+```
+
+### Step 3: Validate & Transform Data
+**CoT**: Each item from WMS needs validation (SKU format, quantity non-negative, location valid). Transform WMS schema to our internal inventory schema.
+```tool_call
+name: code_execute
+args:
+  language: python
+  code: |
+    validated = []
+    for item in wms_items:
+        if not validate_sku(item['sku']):
+            errors.append(f"Invalid SKU: {item['sku']}")
+            continue
+        validated.append(transform_to_internal(item))
+```
+
+### Step 4: Batch Upsert to Database
+**CoT**: Use batch operations for efficiency. Split into chunks of 500 items and upsert to the inventory database with conflict resolution on SKU.
+```tool_call
+name: database_query
+args:
+  operation: batch_upsert
+  table: inventory
+  batch_size: 500
+  conflict_key: sku
+response_mock_schema:
+  inserted: "integer"
+  updated: "integer"
+  errors: "array"
+```
+
+### Step 5: Generate Sync Report
+**CoT**: After sync completes, generate a summary report including total items synced, errors encountered, and time elapsed.
+```tool_call
+name: code_execute
+args:
+  language: python
+  code: |
+    report = {
+        "synced_count": len(validated),
+        "error_count": len(errors),
+        "errors": errors[:10],
+        "duration_seconds": elapsed,
+    }
+```
+
+## Patch Notes
+Initial official SOP for WMS inventory synchronization. Covers authentication, paginated fetch, data validation, batch upsert, and reporting.

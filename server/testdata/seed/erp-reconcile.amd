@@ -1,0 +1,80 @@
+---
+Task_CID: "official-erp-reconcile-v1"
+Ref_Agent_ID: "drew-official"
+Branch_Tag: "official"
+Timestamp: "2026-01-16T10:00:00Z"
+Domain_Tags:
+  - "ERP"
+  - "Finance"
+  - "Reconciliation"
+  - "Accounting"
+Execution_Framework: "CrewAI"
+Base_Model_Tier: "LLM-Tier-3"
+Data_Sovereignty: "Cloud_Allowed"
+Input_Contract:
+  Type: "JSON"
+  Schema_Hash: "sha256:erp-recon-in-v1"
+  Sample:
+    period: "2026-Q1"
+    ledger_ids: ["GL-001", "GL-002"]
+Output_Contract:
+  Type: "JSON"
+  Schema_Hash: "sha256:erp-recon-out-v1"
+  Sample:
+    discrepancies: 3
+    total_matched: 1250
+Success_Rate_Est: 0.89
+Avg_Token_Cost: 4500
+Split_Protocol:
+  Original_Share: 1.0
+  Branch_Share: 0.0
+---
+
+## Task Goal
+Reconcile ERP ledger entries across multiple accounts for a given period, identifying discrepancies and generating adjustment recommendations.
+
+## Chain of Thought & Action Trajectory
+
+### Step 1: Fetch Ledger Entries
+**CoT**: Pull all transactions from the specified ledgers for the reconciliation period via the ERP API.
+```tool_call
+name: http_request
+args:
+  method: GET
+  url: "{{erp_url}}/api/ledgers/{{ledger_ids}}/transactions?period={{period}}"
+response_mock_schema:
+  transactions: "array"
+  total: "integer"
+```
+
+### Step 2: Match Transactions
+**CoT**: Apply rule-based matching (amount, date, reference number) to find corresponding debit/credit pairs across ledgers.
+```tool_call
+name: code_execute
+args:
+  language: python
+  code: |
+    matched, unmatched = reconcile(transactions, tolerance=0.01)
+```
+
+### Step 3: Flag Discrepancies
+**CoT**: Identify unmatched entries and entries with amount differences exceeding tolerance.
+```tool_call
+name: code_execute
+args:
+  language: python
+  code: |
+    discrepancies = analyze_discrepancies(unmatched)
+```
+
+### Step 4: Generate Adjustment Report
+**CoT**: Create a reconciliation report with matched totals, discrepancy details, and suggested journal entries.
+```tool_call
+name: report_generate
+args:
+  format: pdf
+  template: reconciliation_report
+```
+
+## Patch Notes
+Official ERP reconciliation SOP. Handles multi-ledger matching, discrepancy detection, and adjustment suggestions.

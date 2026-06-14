@@ -1,0 +1,40 @@
+# === Go ===
+bin/
+*.exe
+*.test
+*.out
+
+# === Node / Next.js ===
+web/node_modules/
+web/.next/
+web/out/
+
+# === Python ===
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# === Docker ===
+docker-compose.override.yml
+
+# === IDE ===
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Generated test data (regenerate with `make gentest`) ===
+server/testdata/generated/
+
+# === Model cache ===
+model_cache/
+
+# === Environment ===
+.env
+.env.*
+!.env.example

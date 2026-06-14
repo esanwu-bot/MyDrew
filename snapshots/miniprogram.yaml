@@ -1,0 +1,81 @@
+---
+snapshot_id: "yjbg-003"
+name: "微信小程序商城（微信生态+支付）"
+version: "5.0.1"
+author: "工匠_张全栈"
+price: 6000
+tags: ["小程序", "微信", "电商", "社交电商", "会员系统"]
+variables:
+  - name: shop_type
+    type: enum
+    options: ["品牌商城", "社区团购", "分销裂变", "预约服务"]
+    default: "品牌商城"
+  - name: need_live
+    type: boolean
+    default: false
+  - name: need_distribution
+    type: boolean
+    default: false
+  - name: integrate_merchant
+    type: boolean
+    default: true
+steps:
+  - id: 1
+    name: "小程序注册与认证"
+    tool: "wechat-cli"
+    auto: true
+    estimated_hours: 1
+  - id: 2
+    name: "UI 设计（小程序规范）"
+    tool: "human"
+    auto: false
+    estimated_hours: 16
+  - id: 3
+    name: "前端页面开发"
+    tool: "taro-cli"
+    auto: true
+    estimated_hours: 12
+  - id: 4
+    name: "后端 API 与数据库"
+    tool: "nestjs-cli"
+    auto: true
+    estimated_hours: 10
+  - id: 5
+    name: "微信支付对接"
+    tool: "wechat-pay-api"
+    auto: true
+    estimated_hours: 3
+  - id: 6
+    name: "会员与积分系统"
+    tool: "nestjs-cli"
+    auto: true
+    estimated_hours: 4
+  - id: 7
+    name: "分销/裂变模块（如需要）"
+    tool: "nestjs-cli"
+    auto: true
+    estimated_hours: 4
+  - id: 8
+    name: "直播插件集成（如需要）"
+    tool: "wechat-live"
+    auto: true
+    estimated_hours: 2
+  - id: 9
+    name: "人工测试与提审"
+    tool: "human"
+    auto: false
+    estimated_hours: 6
+qa:
+  - check: "微信支付沙盒测试"
+    method: "auto"
+  - check: "微信审核规范检查"
+    method: "auto"
+  - check: "真机体验测试"
+    method: "manual"
+  - check: "客户运营培训"
+    method: "manual"
+metrics:
+  reuse_count: 68
+  avg_delivery_days: 4.0
+  satisfaction: 0.96
+  refund_rate: 0.01

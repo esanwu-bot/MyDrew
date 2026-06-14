@@ -1,0 +1,77 @@
+---
+Task_CID: "official-tms-pricing-v1"
+Ref_Agent_ID: "drew-official"
+Branch_Tag: "official"
+Timestamp: "2026-01-15T09:00:00Z"
+Domain_Tags:
+  - "TMS"
+  - "Transport"
+  - "Price-Comparison"
+  - "Logistics"
+Execution_Framework: "LangGraph"
+Base_Model_Tier: "LLM-Tier-2"
+Data_Sovereignty: "Cloud_Allowed"
+Input_Contract:
+  Type: "JSON"
+  Schema_Hash: "sha256:tms-price-in-v1"
+  Sample:
+    origin: "Shanghai"
+    destination: "Rotterdam"
+    weight_kg: 500
+Output_Contract:
+  Type: "JSON"
+  Schema_Hash: "sha256:tms-price-out-v1"
+  Sample:
+    best_option: "carrier-A"
+    savings_pct: 12.5
+Success_Rate_Est: 0.92
+Avg_Token_Cost: 2800
+Split_Protocol:
+  Original_Share: 1.0
+  Branch_Share: 0.0
+---
+
+## Task Goal
+Compare pricing across multiple TMS (Transport Management System) carriers for a given shipment, identifying the optimal carrier based on cost, transit time, and reliability score.
+
+## Chain of Thought & Action Trajectory
+
+### Step 1: Gather Carrier Quotes
+**CoT**: Query multiple carrier APIs simultaneously for pricing quotes. Normalize currency and units across responses.
+```tool_call
+name: parallel_http_request
+args:
+  requests:
+    - method: POST
+      url: "{{carrier_a_url}}/quote"
+      body: {origin: "{{origin}}", destination: "{{destination}}", weight: "{{weight_kg}}"}
+    - method: POST
+      url: "{{carrier_b_url}}/pricing"
+      body: {from: "{{origin}}", to: "{{destination}}", mass: "{{weight_kg}}"}
+response_mock_schema:
+  quotes: "array"
+```
+
+### Step 2: Normalize & Compare
+**CoT**: Convert all quotes to a common format (USD, kg, days). Calculate total landed cost including surcharges.
+```tool_call
+name: code_execute
+args:
+  language: python
+  code: |
+    normalized = [normalize_quote(q) for q in quotes]
+    ranked = sorted(normalized, key=lambda x: x['total_cost'])
+```
+
+### Step 3: Select Optimal Carrier
+**CoT**: Apply weighted scoring: 50% cost, 30% transit time, 20% reliability. Return the best option with rationale.
+```tool_call
+name: code_execute
+args:
+  language: python
+  code: |
+    best = weighted_score(ranked, weights={cost: 0.5, time: 0.3, reliability: 0.2})
+```
+
+## Patch Notes
+Official TMS price comparison SOP. Supports multi-carrier quotes, currency normalization, and weighted scoring.

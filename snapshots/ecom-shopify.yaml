@@ -1,0 +1,76 @@
+---
+snapshot_id: "yjbg-001"
+name: "跨境电商独立站（Shopify+Stripe）"
+version: "4.2.0"
+author: "工匠_老王"
+price: 8000
+tags: ["电商", "Shopify", "海外支付", "东南亚", "独立站"]
+variables:
+  - name: platform
+    type: enum
+    options: [Shopify, WooCommerce, Magento]
+    default: Shopify
+  - name: target_market
+    type: enum
+    options: ["东南亚", "北美", "欧洲", "中东"]
+    default: "东南亚"
+  - name: payment_gateway
+    type: enum
+    options: [Stripe, PayPal, "2C2P", "本地银行"]
+    default: Stripe
+  - name: include_seo
+    type: boolean
+    default: true
+  - name: lang_pack
+    type: string
+    default: "en,zh,th,id"
+steps:
+  - id: 1
+    name: "店铺初始化"
+    tool: "shopify-cli"
+    auto: true
+    estimated_hours: 2
+  - id: 2
+    name: "主题与视觉设计"
+    tool: "human"
+    auto: false
+    estimated_hours: 16
+  - id: 3
+    name: "支付网关配置"
+    tool: "stripe-api"
+    auto: true
+    estimated_hours: 3
+  - id: 4
+    name: "多语言与货币"
+    tool: "auto-translate"
+    auto: true
+    estimated_hours: 2
+  - id: 5
+    name: "SEO 基础配置"
+    tool: "seo-automation"
+    auto: true
+    estimated_hours: 2
+  - id: 6
+    name: "物流与税区设置"
+    tool: "shopify-cli"
+    auto: true
+    estimated_hours: 2
+  - id: 7
+    name: "人工验收与上线"
+    tool: "human"
+    auto: false
+    estimated_hours: 4
+qa:
+  - check: "支付流程测试（Stripe 沙盒）"
+    method: "auto"
+  - check: "移动端响应式检查"
+    method: "auto"
+  - check: "SEO 元标签完整性"
+    method: "auto"
+  - check: "客户视觉确认"
+    method: "manual"
+metrics:
+  reuse_count: 47
+  avg_delivery_days: 3.2
+  satisfaction: 0.98
+  refund_rate: 0.01

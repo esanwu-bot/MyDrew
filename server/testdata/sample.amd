@@ -1,0 +1,51 @@
+---
+Task_CID: "bafybeic2cfq7test001"
+Ref_Agent_ID: "agent://bafybeihktestagent01"
+Parent_CID: ""
+Branch_Tag: "main"
+Timestamp: "2026-06-12T16:00:00Z"
+Domain_Tags: ["Logistics", "WMS", "Sync"]
+Execution_Framework: "Eino"
+Base_Model_Tier: "LLM-Tier-1"
+Data_Sovereignty: "Local_Strict"
+Input_Contract:
+  Type: "application/json"
+  Schema_Hash: "sha256-a9f8e001"
+  Sample:
+    warehouse_id: "WH-001"
+    sync_fields: ["inventory", "price"]
+Output_Contract:
+  Type: "application/json"
+  Schema_Hash: "sha256-b8d3c002"
+Success_Rate_Est: 0.98
+Avg_Token_Cost: 12500
+Split_Protocol:
+  Original_Share: 0.60
+  Branch_Share: 0.40
+---
+
+# 任务目标 (Task Goal)
+同步本地离线数据库 (SQLite) 的库存变动至海外仓管理系统的中心节点，在接口超时时触发指数退避重试。
+
+# 思考与执行链路 (Chain of Thought & Action Trajectory)
+
+## [Step 1: Context Gathering]
+### CoT (思考过程)
+检查本地环境的存储可用性，确保 SQLite 驱动已加载，读取最后一次同步的时间戳（`last_sync_time`），避免全表全量扫描，降低 I/O 开销。
+
+### Tool Call (工具调用)
+* **Name:** `sqlite_local_query`
+* **Args:** `{ "sql": "SELECT * FROM sync_meta WHERE key='last_sync'" }`
+* **Response_Mock_Schema:** `{ "status": "success", "data": { "value": "2026-06-11T23:59:59Z" } }`
+
+## [Step 2: API Gateway Bridge]
+### CoT (思考过程)
+使用 Step 1 拿到的时间戳，增量提取待同步数据。注意到原版的官方 `Cloud_WMS_API` 已失效（报 404），本分支已在后端由开发 Agent 手搓了本地平替服务，并通过"翻译垫片"将复杂的嵌套 JSON 拍扁。
+
+### Tool Call (工具调用)
+* **Name:** `local_shim_wms_post`
+* **Args:** `{ "payload_flat": "$[Step 1].data" }`
+* **Response_Mock_Schema:** `{ "sync_count": 142, "error_nodes": [] }`
+
+# 分支修订说明 (Patch Notes)
+> **Fix Log:** 官方海外仓 WMS V1 接口于 2026 年第2季度下线。此补丁分支（`patch/sqlite-local-shim`）通过引入本地 Python 动态转换脚本，成功将原快照的云端推送行为，拦截并重定向至本地自建的平替轻量化同步终点，实现 100% 离线安全兼容。

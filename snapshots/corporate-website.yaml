@@ -1,0 +1,72 @@
+---
+snapshot_id: "yjbg-002"
+name: "企业品牌官网（响应式+CMS）"
+version: "3.1.0"
+author: "工匠_李设计"
+price: 12000
+tags: ["企业官网", "品牌", "响应式", "CMS", "SEO"]
+variables:
+  - name: cms
+    type: enum
+    options: [WordPress, Strapi, " headless CMS", "纯静态"]
+    default: WordPress
+  - name: style
+    type: enum
+    options: ["极简科技", "商务稳重", "创意活泼", "工业硬核"]
+    default: "极简科技"
+  - name: pages
+    type: string
+    default: "首页,关于我们,产品服务,案例,新闻,联系"
+  - name: multi_lang
+    type: boolean
+    default: false
+steps:
+  - id: 1
+    name: "需求访谈与信息架构"
+    tool: "human"
+    auto: false
+    estimated_hours: 8
+  - id: 2
+    name: "UI 视觉设计"
+    tool: "human"
+    auto: false
+    estimated_hours: 24
+  - id: 3
+    name: "前端切版与交互"
+    tool: "vite-react"
+    auto: true
+    estimated_hours: 12
+  - id: 4
+    name: "CMS 后端搭建"
+    tool: "strapi-cli"
+    auto: true
+    estimated_hours: 6
+  - id: 5
+    name: "内容填充与 SEO"
+    tool: "seo-automation"
+    auto: true
+    estimated_hours: 4
+  - id: 6
+    name: "性能优化（Lighthouse 90+）"
+    tool: "lighthouse-ci"
+    auto: true
+    estimated_hours: 2
+  - id: 7
+    name: "客户验收与培训"
+    tool: "human"
+    auto: false
+    estimated_hours: 6
+qa:
+  - check: "Lighthouse 性能评分 >= 90"
+    method: "auto"
+  - check: "核心页面加载 < 2s"
+    method: "auto"
+  - check: "CMS 后台操作培训"
+    method: "manual"
+  - check: "品牌视觉一致性确认"
+    method: "manual"
+metrics:
+  reuse_count: 32
+  avg_delivery_days: 5.5
+  satisfaction: 0.95
+  refund_rate: 0.02

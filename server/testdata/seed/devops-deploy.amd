@@ -1,0 +1,92 @@
+---
+Task_CID: "official-devops-deploy-v1"
+Ref_Agent_ID: "drew-official"
+Branch_Tag: "official"
+Timestamp: "2026-01-18T14:00:00Z"
+Domain_Tags:
+  - "DevOps"
+  - "CI-CD"
+  - "Kubernetes"
+  - "Deployment"
+Execution_Framework: "LangGraph"
+Base_Model_Tier: "LLM-Tier-1"
+Data_Sovereignty: "Cloud_Allowed"
+Input_Contract:
+  Type: "JSON"
+  Schema_Hash: "sha256:deploy-in-v1"
+  Sample:
+    image: "myapp:v2.3.1"
+    environment: "staging"
+    replicas: 3
+Output_Contract:
+  Type: "JSON"
+  Schema_Hash: "sha256:deploy-out-v1"
+  Sample:
+    status: "success"
+    endpoint: "https://staging.myapp.io"
+Success_Rate_Est: 0.97
+Avg_Token_Cost: 2100
+Split_Protocol:
+  Original_Share: 1.0
+  Branch_Share: 0.0
+---
+
+## Task Goal
+Deploy a containerized application to a Kubernetes cluster with health checks, rolling updates, and automatic rollback on failure.
+
+## Chain of Thought & Action Trajectory
+
+### Step 1: Validate Image
+**CoT**: Verify the container image exists in the registry and passes security scanning before deployment.
+```tool_call
+name: shell_execute
+args:
+  command: "crane manifest {{registry}}/{{image}}"
+response_mock_schema:
+  manifest: "object"
+```
+
+### Step 2: Generate K8s Manifests
+**CoT**: Generate deployment, service, and ingress manifests with the specified replica count and resource limits.
+```tool_call
+name: code_execute
+args:
+  language: python
+  code: |
+    manifests = render_templates(image, replicas, environment)
+```
+
+### Step 3: Apply Rolling Update
+**CoT**: Apply manifests using kubectl with --wait flag. Monitor rollout status.
+```tool_call
+name: shell_execute
+args:
+  command: "kubectl apply -f manifests/ --wait --timeout=300s"
+response_mock_schema:
+  output: "string"
+  exit_code: "integer"
+```
+
+### Step 4: Health Check Verification
+**CoT**: Wait for all pods to become ready. Run health check endpoints. If failures detected, trigger rollback.
+```tool_call
+name: http_request
+args:
+  method: GET
+  url: "http://{{service_endpoint}}/health"
+response_mock_schema:
+  status: "string"
+```
+
+### Step 5: Post-Deploy Summary
+**CoT**: Generate deployment summary with pod status, endpoint URLs, and any warnings.
+```tool_call
+name: code_execute
+args:
+  language: python
+  code: |
+    summary = build_deploy_summary(pods, endpoint, environment)
+```
+
+## Patch Notes
+Official DevOps deployment SOP. Covers image validation, K8s manifest generation, rolling updates, health checks, and rollback.

@@ -1,0 +1,67 @@
+# Drew - Agent Trajectory Search Engine
+
+## Prerequisites
+- Go 1.26+
+- Node.js 22+
+- Docker & Docker Compose
+
+## Quick Start
+
+```bash
+# Start infrastructure (PostgreSQL + Qdrant)
+make infra
+
+# Run Go API server (dev mode)
+make server
+
+# Run Next.js frontend (dev mode)
+make web
+
+# Start everything
+make dev
+```
+
+## Commands
+
+```bash
+# Infrastructure
+make infra          # Start PostgreSQL + Qdrant via Docker Compose
+make infra-down     # Stop infrastructure
+
+# Backend
+make server         # Run Go API server on :8080
+make server-test    # Run Go tests
+make server-build   # Build Go binary
+
+# Frontend
+make web            # Run Next.js dev server on :3000
+make web-build      # Build Next.js production bundle
+
+# Full stack
+make dev            # Start infra + server + web
+make build          # Build all components
+make clean          # Remove build artifacts
+
+# Utilities
+make migrate        # Run database migrations
+make lint           # Run linters
+```
+
+## Project Structure
+
+```
+.
+├── server/               # Go API server
+│   ├── cmd/server/       # Entry point
+│   ├── internal/
+│   │   ├── api/          # REST API handlers (Gin)
+│   │   ├── config/       # Environment config
+│   │   ├── models/       # Data models (.amd schema)
+│   │   ├── parser/       # .amd file parser
+│   │   └── storage/      # PostgreSQL + Qdrant clients
+│   ├── migrations/       # SQL migrations
+│   └── testdata/         # Test .amd files
+├── web/                  # Next.js frontend
+├── docker-compose.yml    # Infrastructure services
+└── Makefile
+```

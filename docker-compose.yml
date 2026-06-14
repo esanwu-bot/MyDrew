@@ -1,0 +1,86 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: drew-postgres
+    environment:
+      POSTGRES_USER: drew
+      POSTGRES_PASSWORD: drew
+      POSTGRES_DB: drew
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./server/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U drew"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: drew-qdrant
+    ports:
+      - "6333:6333"  # HTTP
+      - "6334:6334"  # gRPC
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  embedding:
+    build:
+      context: ./embedding-service
+      dockerfile: Dockerfile
+    container_name: drew-embedding
+    environment:
+      EMBEDDING_MODEL: "BAAI/bge-m3"
+      EMBEDDING_DEVICE: "cpu"
+      EMBEDDING_PORT: "8090"
+    ports:
+      - "8090:8090"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 120s  # Model loading takes time
+    volumes:
+      - model_cache:/root/.cache  # Cache model weights
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: drew-server
+    environment:
+      SERVER_PORT: "8080"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: drew
+      DB_PASSWORD: drew
+      DB_NAME: drew
+      QDRANT_HOST: qdrant
+      QDRANT_HTTP_PORT: "6333"
+      QDRANT_GRPC_PORT: "6334"
+      EMBEDDING_URL: "http://embedding:8090"
+      EMBEDDING_MODEL: "BAAI/bge-m3"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      embedding:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  qdrant_data:
+  model_cache:

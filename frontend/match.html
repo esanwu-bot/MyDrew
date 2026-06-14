@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drew — 智能匹配</title>
+<link rel="stylesheet" href="css/theme.css">
+<style>
+.match-form { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.75rem; margin-bottom: 1.5rem; align-items: end; }
+.match-form .group { display: flex; flex-direction: column; gap: 0.3rem; }
+.match-form label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.result-card { display: flex; gap: 1rem; align-items: flex-start; }
+.result-card .score-ring { width: 60px; height: 60px; border-radius: 50%; border: 4px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; font-family: var(--font-mono); color: var(--accent); flex-shrink: 0; }
+.result-card .score-ring.high { border-color: var(--success); color: var(--success); }
+.result-card .score-ring.mid { border-color: var(--warning); color: var(--warning); }
+.result-card .info { flex: 1; }
+.result-card .info .name { font-size: 1.05rem; font-weight: 600; }
+.result-card .info .meta { font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0; }
+.result-card .price-col { text-align: right; }
+.result-card .price-col .price { font-size: 1.2rem; font-weight: 700; color: var(--success); font-family: var(--font-mono); }
+.result-card .price-col .fit { font-size: 0.75rem; color: var(--text-muted); }
+.match-explain { font-size: 0.8rem; color: var(--text-muted); background: var(--bg-panel); padding: 0.75rem; border-radius: 6px; margin-top: 0.5rem; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="drew-layout">
+  <aside class="drew-sidebar">
+    <div class="brand">Drew<span> Match</span></div>
+    <nav>
+      <a href="index.html"><span class="icon">🏪</span> 快照市场</a>
+      <a href="match.html" class="active"><span class="icon">🎯</span> 智能匹配</a>
+      <a href="snapshot.html"><span class="icon">📦</span> 快照详情</a>
+      <a href="#"><span class="icon">⛓️</span> 执行链路</a>
+      <a href="#"><span class="icon">📊</span> 验收报告</a>
+      <a href="#"><span class="icon">⚙️</span> 设置</a>
+    </nav>
+  </aside>
+  <main class="drew-main">
+    <h1>🎯 智能匹配</h1>
+    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">输入需求描述，Drew 将匹配最合适的工匠快照</p>
+
+    <div class="match-form">
+      <div class="group" style="grid-column: span 2;">
+        <label>需求描述</label>
+        <input type="text" id="match-query" placeholder="例如：需要一个跨境电商独立站，支持 Shopify + Stripe 支付...">
+      </div>
+      <div class="group">
+        <label>预算上限</label>
+        <input type="number" id="match-budget" placeholder="¥ 10000">
+      </div>
+      <div class="group">
+        <label>标签过滤</label>
+        <input type="text" id="match-tags" placeholder="电商, Shopify, 海外支付">
+      </div>
+      <button class="btn btn-primary" onclick="doMatch()">🎯 匹配</button>
+    </div>
+
+    <div id="match-results"></div>
+  </main>
+</div>
+
+<script>
+const API_BASE = 'http://localhost:8000/api/v1';
+
+async function doMatch() {
+  const query = document.getElementById('match-query').value;
+  const budget = parseFloat(document.getElementById('match-budget').value) || undefined;
+  const tags = document.getElementById('match-tags').value;
+  const tagList = tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : undefined;
+
+  if (!query) { alert('请输入需求描述'); return; }
+
+  const container = document.getElementById('match-results');
+  container.innerHTML = '<p style="color:var(--text-muted)">匹配中...</p>';
+
+  try {
+    const r = await fetch(API_BASE + '/search', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({query, budget, tags: tagList, limit: 10})
+    });
+    const d = await r.json();
+    render(d.results || []);
+  } catch(e) {
+    container.innerHTML = '<p style="color:var(--danger)">匹配失败: ' + e.message + '</p>';
+  }
+}
+
+function render(results) {
+  const container = document.getElementById('match-results');
+  if (!results.length) { container.innerHTML = '<p style="color:var(--text-muted)">未找到匹配快照</p>'; return; }
+
+  container.innerHTML = results.map((r, idx) => {
+    const scoreClass = r.final_score >= 0.8 ? 'high' : (r.final_score >= 0.6 ? 'mid' : '');
+    const scorePct = (r.final_score * 100).toFixed(0);
+    const priceFit = (r.price_fit * 100).toFixed(0);
+    const tags = (r.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+    const matched = (r.matched_tags || []).map(t => `<span class="tag tag-hot">${t}</span>`).join('');
+
+    return `
+      <div class="card result-card">
+        <div class="score-ring ${scoreClass}">${scorePct}%</div>
+        <div class="info">
+          <div class="name">${idx + 1}. ${r.name}</div>
+          <div class="meta">作者: ${r.author} | 复用 ${r.reuse_count} 次 | 满意度 ${(r.satisfaction*100).toFixed(0)}% | 交付 ${r.avg_delivery_days.toFixed(1)} 天</div>
+          <div style="margin-top: 0.4rem;">${tags} ${matched ? '<span style="color:var(--text-muted);font-size:0.75rem;margin-left:0.5rem;">匹配标签:</span> ' + matched : ''}</div>
+          <div class="match-explain">
+            综合得分 <b>${r.final_score.toFixed(3)}</b> = 语义相似度 ${r.vector_score.toFixed(2)} × 40% + 商业信誉分 ${r.business_score.toFixed(2)} × 60%<br>
+            价格适配度: ${priceFit}% (预算 ¥${r.price.toLocaleString()})
+          </div>
+        </div>
+        <div class="price-col">
+          <div class="price">¥${r.price.toLocaleString()}</div>
+          <div class="fit">预算适配 ${priceFit}%</div>
+          <a href="snapshot.html?id=${r.snapshot_id}" class="btn btn-sm btn-primary" style="margin-top:0.5rem;">查看详情</a>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+</script>
+</body>
+</html>

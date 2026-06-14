@@ -1,0 +1,82 @@
+---
+Task_CID: "official-crm-enrich-v1"
+Ref_Agent_ID: "drew-official"
+Branch_Tag: "official"
+Timestamp: "2026-01-17T11:00:00Z"
+Domain_Tags:
+  - "CRM"
+  - "Sales"
+  - "Data-Enrichment"
+  - "Marketing"
+Execution_Framework: "AutoGen"
+Base_Model_Tier: "LLM-Tier-2"
+Data_Sovereignty: "Cloud_Allowed"
+Input_Contract:
+  Type: "JSON"
+  Schema_Hash: "sha256:crm-enrich-in-v1"
+  Sample:
+    lead_ids: ["L-001", "L-002"]
+    enrichment_sources: ["linkedin", "crunchbase"]
+Output_Contract:
+  Type: "JSON"
+  Schema_Hash: "sha256:crm-enrich-out-v1"
+  Sample:
+    enriched_count: 2
+    avg_confidence: 0.87
+Success_Rate_Est: 0.88
+Avg_Token_Cost: 3800
+Split_Protocol:
+  Original_Share: 1.0
+  Branch_Share: 0.0
+---
+
+## Task Goal
+Enrich CRM lead records with external data sources (LinkedIn profiles, Crunchbase funding data, company technographics) to improve sales qualification scoring.
+
+## Chain of Thought & Action Trajectory
+
+### Step 1: Fetch Lead Records
+**CoT**: Retrieve lead records from CRM that need enrichment based on missing data fields.
+```tool_call
+name: http_request
+args:
+  method: GET
+  url: "{{crm_url}}/api/leads?needs_enrichment=true&limit=100"
+response_mock_schema:
+  leads: "array"
+  total: "integer"
+```
+
+### Step 2: Query External Sources
+**CoT**: For each lead, query configured enrichment APIs. Handle rate limits and deduplicate results.
+```tool_call
+name: parallel_http_request
+args:
+  requests:
+    - url: "https://api.linkedin.com/v2/people/{{email}}"
+    - url: "https://api.crunchbase.com/v4/organizations/{{company}}"
+```
+
+### Step 3: Merge & Score
+**CoT**: Merge enrichment data into lead records. Calculate confidence scores based on data source reliability and match quality.
+```tool_call
+name: code_execute
+args:
+  language: python
+  code: |
+    enriched = merge_enrichment(leads, external_data)
+    scored = calculate_qualification_score(enriched)
+```
+
+### Step 4: Update CRM
+**CoT**: Push enriched records back to CRM with audit trail.
+```tool_call
+name: http_request
+args:
+  method: PUT
+  url: "{{crm_url}}/api/leads/{{lead_id}}/enrich"
+  body: "{{enriched_record}}"
+```
+
+## Patch Notes
+Official CRM data enrichment SOP. Integrates LinkedIn, Crunchbase, and technographic sources.

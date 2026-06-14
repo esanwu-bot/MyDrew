@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drew — 快照市场</title>
+<link rel="stylesheet" href="css/theme.css">
+<style>
+.search-bar { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; max-width: 720px; }
+.search-bar input { flex: 1; }
+.metric-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.metric-card { text-align: center; }
+.metric-card .value { font-size: 1.8rem; font-weight: 700; color: var(--accent); font-family: var(--font-mono); }
+.metric-card .label { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
+.snapshot-card .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+.snapshot-card .title { font-size: 1.05rem; font-weight: 600; color: var(--text-primary); }
+.snapshot-card .meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+.snapshot-card .price { font-size: 1.1rem; font-weight: 700; color: var(--success); font-family: var(--font-mono); }
+.snapshot-card .footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+.snapshot-card .stats { font-size: 0.75rem; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="drew-layout">
+  <aside class="drew-sidebar">
+    <div class="brand">Drew<span> Snapshots</span></div>
+    <nav>
+      <a href="index.html" class="active"><span class="icon">🏪</span> 快照市场</a>
+      <a href="match.html"><span class="icon">🎯</span> 智能匹配</a>
+      <a href="snapshot.html"><span class="icon">📦</span> 快照详情</a>
+      <a href="#"><span class="icon">⛓️</span> 执行链路</a>
+      <a href="#"><span class="icon">📊</span> 验收报告</a>
+      <a href="#"><span class="icon">⚙️</span> 设置</a>
+    </nav>
+  </aside>
+  <main class="drew-main">
+    <h1>🏪 快照市场</h1>
+    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">浏览可复用的服务快照，从经验中创造价值</p>
+
+    <div class="metric-cards">
+      <div class="card metric-card">
+        <div class="value" id="stat-total">—</div>
+        <div class="label">快照总数</div>
+      </div>
+      <div class="card metric-card">
+        <div class="value" id="stat-reuse">—</div>
+        <div class="label">累计复用</div>
+      </div>
+      <div class="card metric-card">
+        <div class="value" id="stat-sat">—</div>
+        <div class="label">平均满意度</div>
+      </div>
+      <div class="card metric-card">
+        <div class="value" id="stat-revenue">—</div>
+        <div class="label">平台月收预估</div>
+      </div>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="搜索快照：电商独立站、企业官网、小程序...">
+      <button class="btn btn-primary" onclick="search()">🔍 搜索</button>
+      <button class="btn btn-secondary" onclick="loadAll()">📋 全部</button>
+    </div>
+
+    <div id="snapshot-list" class="card-grid">
+      <!-- JS 填充 -->
+    </div>
+  </main>
+</div>
+
+<script>
+const API_BASE = 'http://localhost:8000/api/v1';
+
+async function fetchStats() {
+  try {
+    const r = await fetch(API_BASE + '/stats');
+    const d = await r.json();
+    document.getElementById('stat-total').textContent = d.snapshots?.total_snapshots || 0;
+    document.getElementById('stat-reuse').textContent = d.snapshots?.total_reuse || 0;
+    document.getElementById('stat-sat').textContent = (d.snapshots?.avg_satisfaction * 100).toFixed(0) + '%';
+    document.getElementById('stat-revenue').textContent = '¥' + (d.revenue_forecast?.platform_monthly / 1000).toFixed(1) + 'k';
+  } catch(e) { console.error('stats failed', e); }
+}
+
+async function loadAll() {
+  try {
+    const r = await fetch(API_BASE + '/snapshots?limit=50');
+    const d = await r.json();
+    render(d.snapshots || []);
+  } catch(e) { console.error('load failed', e); }
+}
+
+async function search() {
+  const q = document.getElementById('search-input').value;
+  if (!q) return loadAll();
+  try {
+    const r = await fetch(API_BASE + '/search', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({query: q, limit: 20})
+    });
+    const d = await r.json();
+    render(d.results || [], true);
+  } catch(e) { console.error('search failed', e); }
+}
+
+function render(items, isMatch=false) {
+  const container = document.getElementById('snapshot-list');
+  if (!items.length) { container.innerHTML = '<p style="color:var(--text-muted)">暂无数据</p>'; return; }
+  container.innerHTML = items.map(s => {
+    const id = isMatch ? s.snapshot_id : s.snapshot_id;
+    const name = isMatch ? s.name : s.name;
+    const price = isMatch ? s.price : s.price;
+    const tags = (isMatch ? s.tags : s.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+    const score = isMatch ? `<span class="pill pill-info">匹配度 ${(s.final_score*100).toFixed(0)}%</span>` : '';
+    const reuse = isMatch ? s.reuse_count : (s.metrics?.reuse_count || 0);
+    const sat = isMatch ? s.satisfaction : (s.metrics?.satisfaction || 0);
+    const days = isMatch ? s.avg_delivery_days : (s.metrics?.avg_delivery_days || 0);
+    return `
+      <div class="card snapshot-card">
+        <div class="header">
+          <div class="title">${name}</div>
+          <div>${score}</div>
+        </div>
+        <div class="meta">ID: ${id} | 作者: ${isMatch ? s.author : s.author}</div>
+        <div style="margin: 0.5rem 0;">${tags}</div>
+        <div class="price">¥${price.toLocaleString()}</div>
+        <div class="footer">
+          <div class="stats">
+            🔁 ${reuse} 复用 | ⭐ ${(sat*100).toFixed(0)}% 满意 | ⏱️ ${days.toFixed(1)} 天交付
+          </div>
+          <a href="snapshot.html?id=${id}" class="btn btn-sm btn-primary">查看</a>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+fetchStats();
+loadAll();
+</script>
+</body>
+</html>
