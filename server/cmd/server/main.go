@@ -9,12 +9,12 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/drew-search/drew-server/internal/api"
-	"github.com/drew-search/drew-server/internal/config"
-	"github.com/drew-search/drew-server/internal/embedding"
-	"github.com/drew-search/drew-server/internal/search"
-	"github.com/drew-search/drew-server/internal/store"
-	"github.com/drew-search/drew-server/internal/vectorstore"
+	"github.com/esanwu-bot/MyDrew/server/internal/api"
+	"github.com/esanwu-bot/MyDrew/server/internal/config"
+	"github.com/esanwu-bot/MyDrew/server/internal/embedding"
+	"github.com/esanwu-bot/MyDrew/server/internal/search"
+	"github.com/esanwu-bot/MyDrew/server/internal/store"
+	"github.com/esanwu-bot/MyDrew/server/internal/vectorstore"
 )
 
 func main() {

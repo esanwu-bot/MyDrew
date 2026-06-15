@@ -4,9 +4,9 @@ package api
 import (
 	"net/http"
 
-	"github.com/drew-search/drew-server/internal/parser"
-	"github.com/drew-search/drew-server/internal/search"
-	"github.com/drew-search/drew-server/internal/store"
+	"github.com/esanwu-bot/MyDrew/server/internal/parser"
+	"github.com/esanwu-bot/MyDrew/server/internal/search"
+	"github.com/esanwu-bot/MyDrew/server/internal/store"
 	"github.com/gin-gonic/gin"
 )
 

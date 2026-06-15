@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/drew-search/drew-server/internal/models"
+	"github.com/esanwu-bot/MyDrew/server/internal/models"
 	"gopkg.in/yaml.v3"
 )
 

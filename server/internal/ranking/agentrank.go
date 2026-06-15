@@ -9,8 +9,8 @@ import (
 	"context"
 	"math"
 
-	"github.com/drew-search/drew-server/internal/models"
-	"github.com/drew-search/drew-server/internal/store"
+	"github.com/esanwu-bot/MyDrew/server/internal/models"
+	"github.com/esanwu-bot/MyDrew/server/internal/store"
 )
 
 // AgentRanker computes final relevance scores for search results.

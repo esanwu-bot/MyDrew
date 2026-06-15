@@ -1,0 +1,79 @@
+---
+snapshot_id: "yjbg-005"
+name: "内容营销博客站（Next.js + MDX + Newsletter）"
+version: "1.8.0"
+author: "工匠_孙内容"
+price: 5000
+tags: ["博客", "内容营销", "Next.js", "SEO", "Newsletter", "静态生成"]
+variables:
+  - name: cms_type
+    type: enum
+    options: ["MDX 本地", "Notion CMS", "Sanity", "Strapi"]
+    default: "MDX 本地"
+  - name: newsletter
+    type: enum
+    options: ["无", "ConvertKit", "Substack", "Mailchimp"]
+    default: "ConvertKit"
+  - name: comment_system
+    type: enum
+    options: ["无", "Giscus", "Disqus", "Utterances"]
+    default: "Giscus"
+  - name: analytics
+    type: enum
+    options: ["无", "Google Analytics", "Plausible", "Umami"]
+    default: "Umami"
+steps:
+  - id: 1
+    name: "内容策略与栏目规划"
+    tool: "human"
+    auto: false
+    estimated_hours: 6
+  - id: 2
+    name: "Next.js 项目初始化与主题"
+    tool: "nextjs-cli"
+    auto: true
+    estimated_hours: 4
+  - id: 3
+    name: "MDX 内容系统与组件"
+    tool: "nextjs-cli"
+    auto: true
+    estimated_hours: 6
+  - id: 4
+    name: "SEO 与 Open Graph 优化"
+    tool: "seo-automation"
+    auto: true
+    estimated_hours: 2
+  - id: 5
+    name: "Newsletter 订阅集成"
+    tool: "convertkit-api"
+    auto: true
+    estimated_hours: 2
+  - id: 6
+    name: "评论系统与社交分享"
+    tool: "nextjs-cli"
+    auto: true
+    estimated_hours: 2
+  - id: 7
+    name: "RSS 与站点地图生成"
+    tool: "nextjs-cli"
+    auto: true
+    estimated_hours: 1
+  - id: 8
+    name: "内容填充与发布上线"
+    tool: "human"
+    auto: false
+    estimated_hours: 4
+qa:
+  - check: "Lighthouse SEO 评分 >= 95"
+    method: "auto"
+  - check: "RSS 订阅与邮件订阅功能测试"
+    method: "auto"
+  - check: "移动端阅读体验检查"
+    method: "auto"
+  - check: "内容编辑培训与交付"
+    method: "manual"
+metrics:
+  reuse_count: 15
+  avg_delivery_days: 2.5
+  satisfaction: 0.97
+  refund_rate: 0.01

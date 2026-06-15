@@ -12,11 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/drew-search/drew-server/internal/embedding"
-	"github.com/drew-search/drew-server/internal/models"
-	"github.com/drew-search/drew-server/internal/ranking"
-	"github.com/drew-search/drew-server/internal/store"
-	"github.com/drew-search/drew-server/internal/vectorstore"
+	"github.com/esanwu-bot/MyDrew/server/internal/embedding"
+	"github.com/esanwu-bot/MyDrew/server/internal/models"
+	"github.com/esanwu-bot/MyDrew/server/internal/ranking"
+	"github.com/esanwu-bot/MyDrew/server/internal/store"
+	"github.com/esanwu-bot/MyDrew/server/internal/vectorstore"
 )
 
 // Service ties together all search-related dependencies.

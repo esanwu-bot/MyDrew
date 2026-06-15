@@ -1,0 +1,77 @@
+---
+snapshot_id: "yjbg-004"
+name: "企业级 SaaS 管理后台（React + Ant Design Pro）"
+version: "2.5.0"
+author: "工匠_赵前端"
+price: 15000
+tags: ["SaaS", "管理后台", "React", "Ant Design", "RBAC", "数据可视化"]
+variables:
+  - name: framework
+    type: enum
+    options: [Ant Design Pro, Vben Admin, React Admin, "自定义 UI"]
+    default: Ant Design Pro
+  - name: rbac_depth
+    type: enum
+    options: ["基础（菜单+按钮）", "中级（数据权限）", "高级（字段级+动态）"]
+    default: "中级（数据权限）"
+  - name: dataviz
+    type: boolean
+    default: true
+  - name: modules
+    type: string
+    default: "用户管理,角色管理,组织架构,数据报表,系统日志,消息通知"
+steps:
+  - id: 1
+    name: "需求梳理与原型设计"
+    tool: "human"
+    auto: false
+    estimated_hours: 12
+  - id: 2
+    name: "前端架构与组件库搭建"
+    tool: "vite-react"
+    auto: true
+    estimated_hours: 8
+  - id: 3
+    name: "RBAC 权限系统开发"
+    tool: "nestjs-cli"
+    auto: true
+    estimated_hours: 10
+  - id: 4
+    name: "核心业务模块开发"
+    tool: "nestjs-cli"
+    auto: true
+    estimated_hours: 16
+  - id: 5
+    name: "数据可视化图表集成"
+    tool: "echarts-cli"
+    auto: true
+    estimated_hours: 4
+  - id: 6
+    name: "API 对接与联调"
+    tool: "nestjs-cli"
+    auto: true
+    estimated_hours: 6
+  - id: 7
+    name: "自动化测试与性能优化"
+    tool: "lighthouse-ci"
+    auto: true
+    estimated_hours: 3
+  - id: 8
+    name: "客户验收与文档交付"
+    tool: "human"
+    auto: false
+    estimated_hours: 8
+qa:
+  - check: "RBAC 权限控制单元测试覆盖 >= 80%"
+    method: "auto"
+  - check: "首屏加载时间 < 1.5s"
+    method: "auto"
+  - check: "数据可视化图表交互测试"
+    method: "auto"
+  - check: "客户业务场景验收"
+    method: "manual"
+metrics:
+  reuse_count: 28
+  avg_delivery_days: 6.0
+  satisfaction: 0.94
+  refund_rate: 0.03

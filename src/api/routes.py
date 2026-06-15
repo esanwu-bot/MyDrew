@@ -7,6 +7,7 @@ Drew FastAPI — 为前端和第三方提供 REST 接口
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -30,9 +31,11 @@ app = FastAPI(
     description="MyDrew 商业层 API — 快照市场、执行链路、验收结算",
 )
 
+# CORS 配置从环境变量读取，生产环境禁止通配符
+allow_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,11 +48,11 @@ executor = DAGExecutor()
 qa_engine = QAAcceptanceEngine()
 model = ExpectationModel()
 
-# 注册模拟工具
-executor.register_tool("docker", lambda v, s: {"status": "container_running"})
-executor.register_tool("shopify-cli", lambda v, s: {"status": "store_created"})
-executor.register_tool("stripe-api", lambda v, s: {"status": "payment_configured"})
-executor.register_tool("human", lambda v, s: {"status": "human_assigned"})
+# 注册模拟工具（TODO: 替换为真实工具调用，使用 Adapter 模式抽象外部工具接口）
+executor.register_tool("docker", lambda v, s: {"status": "container_running"})        # TODO: 集成 Docker SDK
+executor.register_tool("shopify-cli", lambda v, s: {"status": "store_created"})      # TODO: 调用 Shopify Admin API
+executor.register_tool("stripe-api", lambda v, s: {"status": "payment_configured"})  # TODO: 调用 Stripe SDK
+executor.register_tool("human", lambda v, s: {"status": "human_assigned"})          # TODO: 接入任务调度系统（如 Asana/Jira）
 
 
 # ======================== Pydantic Models ========================

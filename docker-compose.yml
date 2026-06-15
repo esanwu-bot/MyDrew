@@ -6,7 +6,7 @@ services:
     container_name: drew-postgres
     environment:
       POSTGRES_USER: drew
-      POSTGRES_PASSWORD: drew
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-drew}
       POSTGRES_DB: drew
     ports:
       - "5432:5432"
@@ -63,7 +63,7 @@ services:
       DB_HOST: postgres
       DB_PORT: "5432"
       DB_USER: drew
-      DB_PASSWORD: drew
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-drew}
       DB_NAME: drew
       QDRANT_HOST: qdrant
       QDRANT_HTTP_PORT: "6333"
@@ -78,6 +78,23 @@ services:
       qdrant:
         condition: service_healthy
       embedding:
+        condition: service_healthy
+
+  py-server:
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+    container_name: drew-py-server
+    environment:
+      DATABASE_URL: "postgresql://drew:${POSTGRES_PASSWORD:-drew}@postgres:5432/drew"
+      QDRANT_HOST: "qdrant"
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:8080"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
         condition: service_healthy
 
 volumes:
